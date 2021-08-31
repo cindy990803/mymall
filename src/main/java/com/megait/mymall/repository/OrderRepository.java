@@ -1,2 +1,9 @@
-package com.megait.mymall.repository;public class OrderRepository {
+package com.megait.mymall.repository;
+
+import com.megait.mymall.domain.Order;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface OrderRepository extends JpaRepository<Order, Long> {
 }

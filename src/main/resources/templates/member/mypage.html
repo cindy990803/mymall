@@ -1,10 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main-layout}" th:with="activeTab='items', title='MyPage'">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
 </head>
 <body>
-$END$
+<div layout:fragment="content">
+
+<!--  <table class="table">-->
+
+<!--    <tr>-->
+<!--      <th scope="row">ID</th>-->
+<!--      <td th:text="*{email}"></td>-->
+<!--    </tr>-->
+<!--    <tr>-->
+<!--      <th scope="row">Email</th>-->
+<!--      <td th:text="*{email}"></td>-->
+<!--    </tr>-->
+<!--    <tr>-->
+<!--      <th scope="row">Email</th>-->
+<!--      <td th:text="*{email}"></td>-->
+<!--    </tr>-->
+<!--    <tr>-->
+<!--      <th scope="row">Email</th>-->
+<!--      <td th:text="*{email}"></td>-->
+<!--    </tr>-->
+<!--  </table>-->
+
+
+  <ul th:object="${member}">
+    <li th:text="*{email}"></li>  <!-- ${member.email}과 같음 -->
+    <li th:text="*{emailVerified}"></li>
+    <li th:text="*{getJoinedAt()}"></li>
+    <li th:text="*{id}"></li>
+
+  </ul>
+
+</div>
 </body>
 </html>
