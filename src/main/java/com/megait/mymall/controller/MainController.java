@@ -1,7 +1,12 @@
 package com.megait.mymall.controller;
 
+import com.google.gson.JsonObject;
+import com.megait.mymall.domain.Album;
+import com.megait.mymall.domain.Book;
+import com.megait.mymall.domain.Item;
 import com.megait.mymall.domain.Member;
 import com.megait.mymall.repository.MemberRepository;
+import com.megait.mymall.service.ItemService;
 import com.megait.mymall.service.MemberService;
 import com.megait.mymall.util.CurrentMember;
 import com.megait.mymall.validation.JoinFormValidator;
@@ -17,17 +22,16 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.Optional;
+import java.util.*;
 
 @Controller
 @RequiredArgsConstructor
 public class MainController {
 
-
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final MemberService memberService;
     private final MemberRepository memberRepository;
-
+    private final ItemService itemService;
 
     @InitBinder("joinFormVo") // 요청 전에 추가할 설정들 (Controller 에서 사용)
     protected void initBinder(WebDataBinder dataBinder){
@@ -39,11 +43,21 @@ public class MainController {
     public String index(Model model, @CurrentMember Member member){
         String message = "안녕하세요, 손님!";
         if(member != null){
-            message = "안녕하세요, " + member.getName()  + "님!";
+            message = "안녕하세요, " + member.getName() + "님!";
         }
         model.addAttribute("member", member);
         model.addAttribute("msg", message);
+
+        // 앨범, 도서 상품 목록을 attribute로 추가
+        // 이름 : bookList, albumList
+        List<Book> bookList = itemService.getBookList();
+        List<Album> albumList = itemService.getAlbumList();
+
+        model.addAttribute("bookList", bookList);
+        model.addAttribute("albumList", albumList);
+
         return "index";
+        // index.html 에서 thymeleaf 사용해서 상품의 이름, 이미지, 가격을 모두 출력
     }
 
     @GetMapping("/login")
@@ -51,48 +65,21 @@ public class MainController {
         return "member/login";
     }
 
-
-    /*@GetMapping("/mypage")
-    public String mypage(Model model, Principal principal) {
-        Member member = memberRepository.findByEmail(principal.getName()).orElseThrow();
-        model.addAttribute("member", member);
-        return "member/mypage";
-    }*/
-
-
-    /*
-    @GetMapping("/mypage2")
-    public String mypage(Model model, @AuthenticationPrincipal User user){
-        if(user != null) {
-            Member member = memberRepository.findByEmail(user.getUsername()).orElseThrow();
-            model.addAttribute("member", member);
-        }
-        return "member/mypage";
-    }*/
-
-
-    @RequestMapping("/mypage/{email}")   //경로 안에 변수를 넣을 수 있음!!!!!!!
+    @RequestMapping("/mypage/{email}")
     public String mypage(Model model,
                          @CurrentMember Member member,
-                         @PathVariable String email) {   //@PathVariable : 경로 안에 변수가 있다!!!!
-
-        // #this   ==> 이 객체 (자바의 this를 의미함)
-        //              이 곳에서의 this는 로그인 중인 User형 객체. ==> 시큐리티의 User 객체를 의미.
-        // member ==> this.getName
+                         @PathVariable String email){
 
         if(member == null || !member.getEmail().equals(email)) {
             return "redirect:/";
         }
 
-        if(member != null && member.getEmail().equals(email)) {
-            model.addAttribute("member", member);
-        }
-        return "member/mypage";  //이거 경로 아님 html 파일 디렉토리임!!
+        model.addAttribute("member", member);
+        return "member/mypage";
     }
 
     @GetMapping("/signup")
     public String signupForm(Model model){
-
         model.addAttribute("joinFormVo", new JoinFormVo());
         return "member/signup";
     }
@@ -114,14 +101,15 @@ public class MainController {
 
     @Transactional
     @GetMapping("/email-check")
-    public String emailCheck(String email, String token, Model model) {
+    public String emailCheck(String email, String token, Model model){
+
         Optional<Member> optional = memberRepository.findByEmail(email);
         boolean result;
 
-        if (optional.isEmpty()) {
+        if(optional.isEmpty()){
             result = false;
         }
-        else if (! optional.get().getEmailCheckToken().equals(token)) {
+        else if(! optional.get().getEmailCheckToken().equals(token)){
             result = false;
         }
         else {
@@ -135,4 +123,74 @@ public class MainController {
         return "member/email-check-result";
     }
 
+    @GetMapping("/item/detail/{id}")
+    public String itemDetail(@PathVariable Long id, Model model) {
+        Item item = itemService.findItem(id);
+
+        model.addAttribute("item", item);
+
+        return "/item/detail";
+    }
+
+    @GetMapping("/item/like/{id}")
+    @ResponseBody  // 리턴값을 뷰이름으로 인식하지 말고(포워드 하지 말라!),
+    // 리턴값 자체를 response body에 넣어서 응답하라!
+    public String itemLike(@PathVariable Long id,
+                           @CurrentMember Member member,
+                           Model model) {
+        String resultCode = "";
+        String message = "";
+
+        // 현재 인증된 사용자의 likes에 해당 상품을 추가한다.
+        // 예외상황
+        //   - 로그인을 안했을 때.
+        //      (resultCode: "error.auth"  message: "로그인이 필요한 서비스입니다.")
+        //   - 미등록 상품일 때.
+        //      (resultCode: "error.invalid"  message: "잘못된 상품 번호입니다.")
+        //   - 이미 찜한 상품일 때.
+        //      (resultCode: "error.duplicate"  message: "이미 찜한 상품입니다.")
+        switch (itemService.addLike(member, id)){
+            case ERROR_AUTH:
+                resultCode = "error.auth";
+                message = "로그인이 필요한 서비스입니다.";
+                break;
+            case ERROR_INVALID:
+                resultCode = "error.invalid";
+                message = "잘못된 상품 번호입니다.";
+                break;
+            case ERROR_DUPLICATE:
+                resultCode = "error.duplicate";
+                message = "이미 찜한 상품입니다.";
+                break;
+            case OK:
+                resultCode = "ok";
+                message = "찜목록에 추가하였습니다.";
+                break;
+        }
+
+
+        // 응답해줄 JSON 객체 생성 및 설정
+        JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("resultCode", resultCode);
+            jsonObject.addProperty("message", message);
+            log.info("jsonObject.toString() : {}", jsonObject.toString());
+
+        // JSON 객체를 String 형태로 리턴.
+        return jsonObject.toString();
+    }
+
+    @GetMapping("/item/like-list")
+    @Transactional
+    public String likeList(@CurrentMember Member member, Model model) {
+
+        List<Item> list = itemService.getLikeList(member);
+
+        if (list == null) {
+            list = new ArrayList<>();
+        }
+
+        model.addAttribute("list", list);
+
+        return "/item/like";
+    }
 }

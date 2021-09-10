@@ -8,13 +8,12 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@ToString
-@EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Category {
-    @Id @GeneratedValue
+
+    @Id
     private Long id;
 
     @Column(nullable = false)

@@ -13,9 +13,11 @@ public class MemberOAuth2User extends DefaultOAuth2User {
     private final Member member;
 
     public MemberOAuth2User(Member member, OAuth2Attributes attributes) {
-        super(List.of(new SimpleGrantedAuthority(member.getMemberType().name())),
+        super(
+                List.of(new SimpleGrantedAuthority(member.getMemberType().name())),
                 attributes.getAttributes(),
-                attributes.getNameAttributeKey());
+                attributes.getNameAttributeKey()
+        );
 
         this.member = member;
     }

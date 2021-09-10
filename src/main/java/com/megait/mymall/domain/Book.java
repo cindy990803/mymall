@@ -1,22 +1,19 @@
 package com.megait.mymall.domain;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
-import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
 @Entity
+@DiscriminatorValue("BOOK")
 @Getter
 @Setter
-@ToString
 @NoArgsConstructor
-@AllArgsConstructor
 @SuperBuilder
-@DiscriminatorValue("BOOK")
-public class Book extends Item {
-    @Column(nullable = false)
-    String isbn;  //고유식별번호(?)
-
+public class Book extends Item{
+    String isbn;
 }

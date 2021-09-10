@@ -15,6 +15,10 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService implements OAuth2UserService {
+
+    private final MemberRepository memberRepository;
+    private final MemberService memberService;
+
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
 
@@ -23,9 +27,9 @@ public class CustomOAuth2UserService implements OAuth2UserService {
 
         String registeredId = userRequest.getClientRegistration().getRegistrationId();
         String userNameAttributeName = userRequest.getClientRegistration()
-                .getProviderDetails()
-                .getUserInfoEndpoint()
-                .getUserNameAttributeName();
+                    .getProviderDetails()
+                    .getUserInfoEndpoint()
+                    .getUserNameAttributeName();
         OAuth2Attributes attributes = OAuth2Attributes.of(
                 registeredId, userNameAttributeName, oAuth2User.getAttributes()
         );
@@ -34,25 +38,20 @@ public class CustomOAuth2UserService implements OAuth2UserService {
 
         return new MemberOAuth2User(member, attributes);
 
-
     }
 
-    private final MemberRepository memberRepository;
-    private final MemberService memberService;
 
     private Member saveOrUpdate(OAuth2Attributes attributes) {
         String email = attributes.getEmail();
         Member member = memberRepository.findByEmail(email).map(entity -> {
-            //지금 oauth로 인증들어온 유저가 이미 DB에 있는 기존회원인 경우 (update)
-            entity.setName(attributes.getName());
-            entity.setPicture(attributes.getPicture());
-            return memberRepository.save(entity);
-        }).orElse(attributes.toMember());  //신규회원인 경우 (insert)
+                        // 지금 oauth로 인증들어온 유저가 이미 DB에 있는 기존회원인 경우
+                        entity.setName(attributes.getName());
+                        entity.setPicture(attributes.getPicture());
+                        return entity;
+                    }).orElse(attributes.toMember()); // 신규회원인 경우
 
         member = memberRepository.save(member);
         memberService.login(member);
         return member;
     }
-
-
 }

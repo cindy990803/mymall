@@ -2,21 +2,29 @@ package com.megait.mymall;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.util.AntPathMatcher;
-import static org.assertj.core.api.Assertions.assertThat;  //static 메서드만 import해올 수 있음
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 public class AntTests {
-
     @Test
     public void antStylePatternTest() {
 
-        //0818 수업
-        //assertThat(checkAntPattern("/static/**", "/static/a.jpg")).isTrue();  //이걸로 바꿔서 테스트해보기
-        //assertThat(true, is(checkAntPattern("/static/**", "/static/a.jpg")));
+        assertThat(checkAntPattern("/static/**", "/static/a.jpg")).isTrue();
+        assertThat(checkAntPattern("/static/**", "/static/css/a.css")).isTrue();
+        assertThat(checkAntPattern("/static/**", "/x/static/css/a.css")).isFalse();
 
 
+        assertThat(checkAntPattern("/static/**", "/static/a/test.jpg")).isTrue();
         assertThat(checkAntPattern("/static/*", "/static/a/test.jpg")).isFalse();
 
-//        // double asterisks
+        //                     "/static/*"      "/static/**"
+        //   /static/a              true            true
+        //   /static/a.png          true            true
+        //   /static/a/b/c          false           true
+        //   /static/a/b/c.png      false           true
+
+//        assertThat(true, is(checkAntPattern("/static/**", "/static/a.jpg")));
 //        assertThat(true, is(checkAntPattern("/static/**", "/static/css/a.css")));
 //        assertThat(true, is(checkAntPattern("/static/**", "/static/js/a.js")));
 //        assertThat(true, is(checkAntPattern("/static/**", "/static/img/a.jpg")));
@@ -57,9 +65,7 @@ public class AntTests {
 //        assertThat(true, is(checkAntPattern("/static-?/*", "/static-a/abcd.jpg")));
 //        assertThat(true, is(checkAntPattern("/static-?/???.jpg", "/static-a/abc.jpg")));
 
-
     }
-
 
     private boolean checkAntPattern(String pattern, String inputStr) {
         return matches(pattern, inputStr);

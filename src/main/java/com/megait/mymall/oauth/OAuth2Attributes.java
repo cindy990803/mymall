@@ -44,7 +44,7 @@ public class OAuth2Attributes {
                 .email((String) response.get("email"))
                 .picture((String) response.get("profile_image"))
                 .authType(AuthType.NAVER)
-                .attributes((response))
+                .attributes(response)
                 .nameAttributeKey(id)
                 .build();
 
@@ -61,7 +61,7 @@ public class OAuth2Attributes {
                 .email((String) attributes.get("email"))
                 .picture((String) attributes.get("picture"))
                 .authType(AuthType.GOOGLE)
-                .attributes((Map<String, Object>)attributes.get("response"))
+                .attributes(attributes)
                 .nameAttributeKey(id)
                 .build();
     }

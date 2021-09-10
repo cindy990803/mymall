@@ -9,23 +9,37 @@
     <title>Title</title>
 </head>
 <body>
-    <div layout:fragment="content">  <!--  main-layout.html의 content라고 하는 fragment 자리에 이걸 넣어줘!  -->
-        <h1>이곳은 메인페이지</h1>
+<div layout:fragment="content">
+    <h1 th:text="${msg}">이곳은 메인페이지</h1>
 
-        <!-- 로그인을 안 했을 때-->
-        <div sec:authorize="!isAuthenticated()">
-            환영합니다. <span th:text="${#authentication?.name}"></span>님, <br/>
-            로그인해주십시오.
-        </div>
-
-        <!-- 로그인을 했을 때-->
-        <div sec:authorize="isAuthenticated()">
-            환영합니다. <span th:text="${member.email}"></span>님 <br/>
-
-            <form th:action="@{/logout}" method="post">
-                <button>로그아웃</button>
-            </form>
-        </div>
+    <!-- 로그인 안했을 때 -->
+    <div sec:authorize="!isAuthenticated()">
+        환영합니다. <span th:text="${#authentication?.name}"></span>님,
+        로그인을 해주세요.
     </div>
+
+    <!-- 로그인 했을 때 -->
+    <div sec:authorize="isAuthenticated()">
+        환영합니다. <span th:text="${#authentication?.name}"></span>님
+
+        <form th:action="@{/logout}" method="post">
+            <button>로그아웃</button>
+        </form>
+    </div>
+
+    <div class="py-5 ml-2">
+        <h2>이달의 추천 도서</h2>
+        <p class="lead">현재 핫한 도서 리스트!</p>
+    </div>
+    <th:block th:insert="layout/fragments :: itemListFragment(${bookList})"/>
+    <hr class="col-12 my-4">
+    <div class="py-5 ml-2">
+        <h2>이달의 추천 앨범</h2>
+        <p class="lead">현재 핫한 음반 리스트!</p>
+    </div>
+    <th:block th:insert="layout/fragments :: itemListFragment(${bookList})"/>
+
+
+</div>
 </body>
 </html>
