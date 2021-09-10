@@ -6,14 +6,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
-import javax.transaction.Transactional;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -129,6 +129,37 @@ public class ItemService {
         return FlagLike.OK;
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void addAllToCart(Member member, Long[] itemId) {
+        log.info("itemId : {}",  Arrays.toString(itemId));
+        member = memberRepository.findById(member.getId()).orElseThrow();
+        List<Item> itemList = itemRepository.findAllById(List.of(itemId));
+
+        Set<Item> itemSet = new HashSet<>(member.getCart());
+
+        itemList.forEach(e -> {
+            itemSet.add(e);
+        });
+
+        member.setCart(new ArrayList<>(itemSet));
+
+    }
+
+    //Transactional: update쿼리를 날릴 때. 컨트롤러나 서비스(레퍼지토리가 아닌 곳) 측에서 엔티티 값이 변경될 때 써야 함!!
+    //          propagation: 트랜잭셔널 생명주기 관리. 디폴트 REQUIRED Propagation(없으면 만들고 있으면 붙인다)
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void removeAllFromLikes(Member member, Long[] itemId) {
+        //final Member aMember = memberRepository.findById(member.getId()).orElseThrow();
+        member = memberRepository.findById(member.getId()).orElseThrow();
+        List<Item> itemList = itemRepository.findAllById(List.of(itemId));
+
+//        itemList.forEach(e -> {
+//            aMember.getLikes().remove(e);
+//        });
+
+        member.getLikes().removeAll(itemList);
+    }
+
     public enum FlagLike {
         ERROR_AUTH, ERROR_INVALID, ERROR_DUPLICATE, OK
     }
@@ -136,7 +167,8 @@ public class ItemService {
 
 
     public List<Item> getLikeList(Member member) {
-        return memberRepository.findById(member.getId()).get().getLikes();
+        return memberRepository.findByEmail(member.getEmail())
+                .orElseThrow().getLikes();
         //컨트롤러에서 가져온 member는 이미 dettached된 상태이기 때문에, 레퍼지토리를 거쳐서 영속성컨텍스트로 불러온 후 get을 해야 한다.
     }
 
